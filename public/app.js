@@ -25,6 +25,53 @@
     return new Date(t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
   }
 
+  function truncate(str, n = 60) {
+    return str.length > n ? `${str.slice(0, n)}…` : str;
+  }
+
+  // ---------- log console ----------
+
+  const MAX_CONSOLE_LINES = 200;
+
+  function logConsole({ tag, dir, text, level = "info" }) {
+    const log = document.getElementById("consoleLog");
+    const empty = document.getElementById("consoleEmpty");
+    if (empty) empty.hidden = true;
+
+    const line = document.createElement("div");
+    line.className = "console-line";
+
+    const now = new Date();
+    const time = document.createElement("span");
+    time.className = "console-time";
+    time.textContent = `${fmtTime(now.getTime())}.${String(now.getMilliseconds()).padStart(3, "0")}`;
+
+    const tagEl = document.createElement("span");
+    tagEl.className = `console-tag ${tag}`;
+    tagEl.textContent = tag.toUpperCase();
+
+    const dirEl = document.createElement("span");
+    dirEl.className = "console-dir";
+    dirEl.textContent = dir === "req" ? "→" : "←";
+
+    const msgEl = document.createElement("span");
+    msgEl.className = `console-msg ${level}`;
+    msgEl.textContent = text;
+
+    line.append(time, tagEl, dirEl, msgEl);
+    log.appendChild(line);
+
+    while (log.children.length > MAX_CONSOLE_LINES) {
+      log.removeChild(log.firstChild);
+    }
+    log.scrollTop = log.scrollHeight;
+  }
+
+  document.getElementById("consoleClearBtn").addEventListener("click", () => {
+    document.getElementById("consoleLog").replaceChildren(document.getElementById("consoleEmpty"));
+    document.getElementById("consoleEmpty").hidden = false;
+  });
+
   // ---------- hero (STATUS KEAMANAN SISTEM) ----------
 
   function applyHeroState(verdict, timestamp) {
@@ -171,10 +218,30 @@
     btn.textContent = "Memproses…";
 
     const start = performance.now();
+    logConsole({ tag: "ai", dir: "req", text: `GET /api/proses_ai?input="${truncate(input)}"` });
+
     try {
       const res = await fetch(`/api/proses_ai?input=${encodeURIComponent(input)}`);
       const data = await res.json();
       const latencyMs = Math.round(performance.now() - start);
+      const waitPart = data.wait_time_ms != null ? `wait ${data.wait_time_ms}ms · ` : "";
+
+      if (data.status === "success") {
+        const [rf, svm] = data.result;
+        logConsole({
+          tag: "ai",
+          dir: "res",
+          level: "success",
+          text: `${res.status} success · RF=${rf.prediction} ${Math.round(rf.confidence * 100)}% · SVM=${svm.prediction} ${Math.round(svm.confidence * 100)}% · ${waitPart}rtt ${latencyMs}ms`,
+        });
+      } else {
+        logConsole({
+          tag: "ai",
+          dir: "res",
+          level: "error",
+          text: `${res.status} error · ${data.message} · ${waitPart}rtt ${latencyMs}ms`,
+        });
+      }
 
       renderSyncResult(data, latencyMs);
 
@@ -195,6 +262,7 @@
       renderHistory();
     } catch (err) {
       const latencyMs = Math.round(performance.now() - start);
+      logConsole({ tag: "ai", dir: "res", level: "error", text: `network error · ${err.message} · rtt ${latencyMs}ms` });
       renderSyncResult({ status: "error", message: `Request failed: ${err.message}`, result: [] }, latencyMs);
       history.unshift({ t: Date.now(), input, dotStatus: "warning", verdictLabel: "ERROR", latencyMs });
       if (history.length > MAX_HISTORY) history.length = MAX_HISTORY;
@@ -321,6 +389,12 @@
       const signature = await hmacSha256Hex(secret, text);
       document.getElementById("sigPreview").textContent = signature;
 
+      logConsole({
+        tag: "webhook",
+        dir: "req",
+        text: `POST /api/webhook · sig=${signature.slice(0, 12)}… · text="${truncate(text)}"`,
+      });
+
       const res = await fetch("/api/webhook", {
         method: "POST",
         headers: { "Content-Type": "text/plain", "X-Signature": signature },
@@ -329,6 +403,13 @@
       const data = await res.json().catch(() => ({}));
       const latencyMs = Math.round(performance.now() - start);
       const ok = res.ok && data.status === "success";
+
+      logConsole({
+        tag: "webhook",
+        dir: "res",
+        level: ok ? "success" : "error",
+        text: `${res.status} ${ok ? "success" : data.message || "error"} · rtt ${latencyMs}ms`,
+      });
 
       renderWebhookResult(data, latencyMs, ok);
       webhookHistory.unshift({
@@ -341,6 +422,7 @@
       renderWebhookHistory();
     } catch (err) {
       const latencyMs = Math.round(performance.now() - start);
+      logConsole({ tag: "webhook", dir: "res", level: "error", text: `network error · ${err.message} · rtt ${latencyMs}ms` });
       renderWebhookResult({ message: `Request failed: ${err.message}` }, latencyMs, false);
       webhookHistory.unshift({ t: Date.now(), textSnippet: text, ok: false, latencyMs });
       if (webhookHistory.length > MAX_HISTORY) webhookHistory.length = MAX_HISTORY;

@@ -601,6 +601,83 @@ textarea.text-input {
   font-weight: 500;
 }
 
+/* Log console */
+
+.console-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  margin-bottom: 20px;
+}
+
+.console-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.console-head h2 {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.console-log {
+  background: var(--page);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  height: 260px;
+  overflow-y: auto;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 12px;
+}
+
+.console-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+  padding: 2px 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.6;
+}
+
+.console-msg {
+  flex: 1 1 200px;
+}
+
+.console-time {
+  color: var(--text-muted);
+  flex: none;
+}
+
+.console-tag {
+  flex: none;
+  font-weight: 700;
+  width: 58px;
+}
+.console-tag.ai { color: var(--series-cpu); }
+.console-tag.webhook { color: var(--series-network); }
+
+.console-dir {
+  flex: none;
+  color: var(--text-muted);
+}
+
+.console-msg { color: var(--text-secondary); }
+.console-msg.success { color: var(--status-good); }
+.console-msg.error { color: var(--status-critical); }
+
+.console-empty {
+  color: var(--text-muted);
+  font-size: 12.5px;
+  font-family: var(--font);
+  margin: 0;
+}
+
 .foot {
   margin-top: 24px;
   text-align: center;
