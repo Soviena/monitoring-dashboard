@@ -301,6 +301,51 @@ code {
   outline-offset: 1px;
 }
 
+textarea.text-input {
+  resize: vertical;
+  min-height: 64px;
+  line-height: 1.4;
+}
+
+.webhook-form {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.webhook-form .field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.webhook-form .field label,
+.webhook-form .field-label {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.webhook-form .text-input {
+  /* .text-input's flex-basis:260px targets width in a row layout (.test-form);
+     this form is column-direction, where the same basis would size height instead. */
+  flex: none;
+}
+
+.webhook-form .btn-primary {
+  align-self: flex-start;
+}
+
+.sig-preview {
+  display: block;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  word-break: break-all;
+}
+
 .btn-primary {
   background: var(--series-cpu);
   color: #ffffff;

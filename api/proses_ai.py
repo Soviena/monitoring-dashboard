@@ -1,5 +1,6 @@
 import asyncio
 import random
+import time
 
 from fastapi import FastAPI
 
@@ -37,12 +38,20 @@ async def proses_ai(input: str = ""):
     if not input.strip():
         return {"status": "error", "message": "query parameter 'input' is required", "result": []}
 
+    start = time.perf_counter()
     try:
         result_rf, result_svm = await asyncio.gather(
             run_model_rf(input),
             run_model_svm(input),
         )
     except Exception as exc:
-        return {"status": "error", "message": str(exc), "result": []}
+        wait_time_ms = round((time.perf_counter() - start) * 1000, 2)
+        return {"status": "error", "message": str(exc), "result": [], "wait_time_ms": wait_time_ms}
 
-    return {"status": "success", "input": input, "result": [result_rf, result_svm]}
+    wait_time_ms = round((time.perf_counter() - start) * 1000, 2)
+    return {
+        "status": "success",
+        "input": input,
+        "result": [result_rf, result_svm],
+        "wait_time_ms": wait_time_ms,
+    }

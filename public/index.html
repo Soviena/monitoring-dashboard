@@ -70,6 +70,61 @@
         <ul class="history-list" id="aiHistoryList"></ul>
       </div>
     </section>
+
+    <section class="test-card" aria-label="Test webhook" id="webhookCard">
+      <h2>Test /api/webhook</h2>
+      <p class="hint">
+        Menghitung signature HMAC-SHA256 dari teks di bawah langsung di browser (Web Crypto API),
+        lalu mengirim POST ke <code>/api/webhook</code> dengan header <code>X-Signature</code>.
+        Secret tidak pernah disimpan — hanya dipakai di memori halaman ini untuk satu kali kirim.
+      </p>
+
+      <form class="test-form webhook-form" id="webhookForm">
+        <div class="field">
+          <label for="hmacSecret">HMAC secret (<code>WEBHOOK_SECRET</code>)</label>
+          <input
+            class="text-input"
+            id="hmacSecret"
+            name="secret"
+            type="password"
+            placeholder="Secret untuk menandatangani request…"
+            autocomplete="off"
+            required
+          />
+        </div>
+
+        <div class="field">
+          <label for="webhookText">Teks payload</label>
+          <textarea
+            class="text-input"
+            id="webhookText"
+            name="text"
+            rows="3"
+            placeholder="Pesan yang akan diteruskan ke Telegram…"
+            required
+          ></textarea>
+        </div>
+
+        <div class="field">
+          <span class="field-label">Signature terhitung</span>
+          <code class="sig-preview" id="sigPreview">—</code>
+        </div>
+
+        <button class="btn-primary" id="webhookSubmitBtn" type="submit">Sign &amp; send</button>
+      </form>
+
+      <div class="result-meta" id="webhookResultMeta" hidden>
+        <span class="status-pill" id="webhookStatusPill"></span>
+        <span class="result-latency" id="webhookLatency"></span>
+      </div>
+
+      <div id="webhookResultBody"></div>
+
+      <div class="ai-history" id="webhookHistoryWrap" hidden>
+        <h3>Riwayat percobaan</h3>
+        <ul class="history-list" id="webhookHistoryList"></ul>
+      </div>
+    </section>
   </main>
 
   <footer class="foot">

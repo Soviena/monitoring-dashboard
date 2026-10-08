@@ -214,4 +214,140 @@
 
   // initial automatic check so the dashboard isn't empty on load
   runSync(DEFAULT_INPUT, { isAuto: true });
+
+  // ---------- webhook test card ----------
+
+  const webhookHistory = [];
+
+  async function hmacSha256Hex(secret, message) {
+    const enc = new TextEncoder();
+    const key = await crypto.subtle.importKey(
+      "raw",
+      enc.encode(secret),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["sign"]
+    );
+    const sigBuffer = await crypto.subtle.sign("HMAC", key, enc.encode(message));
+    return Array.from(new Uint8Array(sigBuffer))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+  }
+
+  async function updateSignaturePreview() {
+    const secret = document.getElementById("hmacSecret").value;
+    const text = document.getElementById("webhookText").value;
+    const preview = document.getElementById("sigPreview");
+    if (!secret || !text) {
+      preview.textContent = "—";
+      return;
+    }
+    preview.textContent = await hmacSha256Hex(secret, text);
+  }
+
+  document.getElementById("hmacSecret").addEventListener("input", updateSignaturePreview);
+  document.getElementById("webhookText").addEventListener("input", updateSignaturePreview);
+
+  function renderWebhookResult(data, latencyMs, ok) {
+    const metaWrap = document.getElementById("webhookResultMeta");
+    const pill = document.getElementById("webhookStatusPill");
+    const latencyEl = document.getElementById("webhookLatency");
+    const body = document.getElementById("webhookResultBody");
+
+    metaWrap.hidden = false;
+    latencyEl.textContent = `${latencyMs} ms round-trip`;
+    pill.replaceChildren();
+    body.replaceChildren();
+
+    pill.className = `status-pill ${ok ? "success" : "error"}`;
+    const dot = document.createElement("span");
+    dot.className = `status-dot status-${ok ? "good" : "critical"}`;
+    pill.append(dot, document.createTextNode(ok ? "Success" : "Error"));
+
+    const box = document.createElement("div");
+    box.className = "result-error-box";
+    box.style.borderLeftColor = ok ? "var(--status-good)" : "var(--status-critical)";
+    const msg = document.createElement("span");
+    msg.textContent = data.message || (ok ? "Terkirim ke Telegram" : "Unknown error");
+    box.appendChild(msg);
+    body.appendChild(box);
+  }
+
+  function renderWebhookHistory() {
+    const wrap = document.getElementById("webhookHistoryWrap");
+    const list = document.getElementById("webhookHistoryList");
+    if (!webhookHistory.length) {
+      wrap.hidden = true;
+      return;
+    }
+    wrap.hidden = false;
+    list.replaceChildren();
+
+    webhookHistory.forEach((entry) => {
+      const li = document.createElement("li");
+
+      const dot = document.createElement("span");
+      dot.className = `status-dot status-${entry.ok ? "good" : "critical"}`;
+
+      const time = document.createElement("span");
+      time.className = "history-time";
+      time.textContent = fmtTime(entry.t);
+
+      const input = document.createElement("span");
+      input.className = "history-input";
+      input.textContent = entry.textSnippet;
+
+      const latency = document.createElement("span");
+      latency.className = "history-latency";
+      latency.textContent = `${entry.latencyMs} ms`;
+
+      li.append(dot, time, input, latency);
+      list.appendChild(li);
+    });
+  }
+
+  document.getElementById("webhookForm").addEventListener("submit", async (evt) => {
+    evt.preventDefault();
+    const secret = document.getElementById("hmacSecret").value;
+    const text = document.getElementById("webhookText").value;
+    if (!secret || !text) return;
+
+    const btn = document.getElementById("webhookSubmitBtn");
+    btn.disabled = true;
+    btn.textContent = "Mengirim…";
+
+    const start = performance.now();
+    try {
+      const signature = await hmacSha256Hex(secret, text);
+      document.getElementById("sigPreview").textContent = signature;
+
+      const res = await fetch("/api/webhook", {
+        method: "POST",
+        headers: { "Content-Type": "text/plain", "X-Signature": signature },
+        body: text,
+      });
+      const data = await res.json().catch(() => ({}));
+      const latencyMs = Math.round(performance.now() - start);
+      const ok = res.ok && data.status === "success";
+
+      renderWebhookResult(data, latencyMs, ok);
+      webhookHistory.unshift({
+        t: Date.now(),
+        textSnippet: text.length > 60 ? `${text.slice(0, 60)}…` : text,
+        ok,
+        latencyMs,
+      });
+      if (webhookHistory.length > MAX_HISTORY) webhookHistory.length = MAX_HISTORY;
+      renderWebhookHistory();
+    } catch (err) {
+      const latencyMs = Math.round(performance.now() - start);
+      renderWebhookResult({ message: `Request failed: ${err.message}` }, latencyMs, false);
+      webhookHistory.unshift({ t: Date.now(), textSnippet: text, ok: false, latencyMs });
+      if (webhookHistory.length > MAX_HISTORY) webhookHistory.length = MAX_HISTORY;
+      renderWebhookHistory();
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Sign & send";
+    }
+  });
 })();
