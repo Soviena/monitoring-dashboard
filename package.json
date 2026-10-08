@@ -4,6 +4,6 @@
   "private": true,
   "description": "Dark-theme data monitoring dashboard with a static UI and serverless API, deployed on Vercel.",
   "engines": {
-    "node": "20.x"
+    "node": "24.x"
   }
 }
