@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI Test — Monitor</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="app">
+
+  <header class="topbar">
+    <div class="topbar-left">
+      <span class="logo-dot" aria-hidden="true"></span>
+      <h1>Monitor</h1>
+      <nav class="topnav" aria-label="Primary">
+        <a href="index.html">Dashboard</a>
+        <a href="test-ai.html" aria-current="page">AI Test</a>
+      </nav>
+    </div>
+    <div class="topbar-right">
+      <time class="clock" id="clock" aria-live="off"></time>
+    </div>
+  </header>
+
+  <main>
+    <section class="test-card" aria-label="Run a test">
+      <h2>Test /api/proses_ai</h2>
+      <p class="hint">Calls the simulated RF + SVM endpoint and shows both model results. No real model runs — data is mocked.</p>
+      <form class="test-form" id="testForm">
+        <label for="inputText" class="sr-only">Input text</label>
+        <input
+          class="text-input"
+          id="inputText"
+          name="input"
+          type="text"
+          placeholder="Enter text to classify…"
+          autocomplete="off"
+          required
+        />
+        <button class="btn-primary" id="submitBtn" type="submit">Run test</button>
+      </form>
+    </section>
+
+    <section class="test-card" aria-label="Result" id="resultSection" hidden>
+      <h2>Result</h2>
+      <div class="result-meta">
+        <span class="status-pill" id="statusPill"></span>
+        <span class="result-latency" id="resultLatency"></span>
+      </div>
+
+      <div id="resultBody"></div>
+
+      <button class="link-btn" id="toggleRaw" type="button" aria-expanded="false" aria-controls="rawJsonWrap" style="margin-top: 10px;">
+        View raw response
+      </button>
+      <div class="chart-table-wrap" id="rawJsonWrap" hidden>
+        <pre id="rawJson" style="margin: 0; font-size: 12px; color: var(--text-secondary); white-space: pre-wrap; word-break: break-word;"></pre>
+      </div>
+    </section>
+
+    <section class="panel" aria-label="Recent test runs">
+      <h2>Recent runs</h2>
+      <ul class="history-list" id="historyList"></ul>
+      <p class="empty-state" id="historyEmpty">No test runs yet.</p>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <span>Data is simulated for demo purposes</span>
+  </footer>
+
+</div>
+<script src="test-ai.js"></script>
+</body>
+</html>

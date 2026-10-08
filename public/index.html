@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Monitor — Data Dashboard</title>
+<title>Monitor — Keamanan Sistem</title>
 <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -13,104 +13,67 @@
     <div class="topbar-left">
       <span class="logo-dot" aria-hidden="true"></span>
       <h1>Monitor</h1>
+      <nav class="topnav" aria-label="Primary">
+        <a href="index.html" aria-current="page">Dashboard</a>
+        <a href="test-ai.html">AI Test</a>
+      </nav>
     </div>
     <div class="topbar-right">
       <div class="overall-status" id="overallStatus">
         <span class="status-dot status-good" id="overallDot"></span>
-        <span id="overallLabel">All systems operational</span>
+        <span id="overallLabel">Memeriksa…</span>
       </div>
       <time class="clock" id="clock" aria-live="off"></time>
     </div>
   </header>
 
   <main>
-    <section class="stats-grid" aria-label="Key metrics">
-      <article class="stat-tile" data-metric="cpu">
-        <div class="stat-head">
-          <span class="stat-label">CPU usage</span>
-          <span class="stat-delta" id="cpuDelta"></span>
-        </div>
-        <div class="stat-body">
-          <span class="stat-value" id="cpuValue">—</span>
-          <canvas class="stat-spark" id="cpuSpark" width="120" height="36" role="img" aria-label="CPU usage trend"></canvas>
-        </div>
-      </article>
-
-      <article class="stat-tile" data-metric="memory">
-        <div class="stat-head">
-          <span class="stat-label">Memory usage</span>
-          <span class="stat-delta" id="memoryDelta"></span>
-        </div>
-        <div class="stat-body">
-          <span class="stat-value" id="memoryValue">—</span>
-          <canvas class="stat-spark" id="memorySpark" width="120" height="36" role="img" aria-label="Memory usage trend"></canvas>
-        </div>
-      </article>
-
-      <article class="stat-tile" data-metric="network">
-        <div class="stat-head">
-          <span class="stat-label">Network</span>
-          <span class="stat-delta" id="networkDelta"></span>
-        </div>
-        <div class="stat-body">
-          <span class="stat-value" id="networkValue">—</span>
-          <canvas class="stat-spark" id="networkSpark" width="120" height="36" role="img" aria-label="Network throughput trend"></canvas>
-        </div>
-      </article>
-
-      <article class="stat-tile" data-metric="requests">
-        <div class="stat-head">
-          <span class="stat-label">Requests / s</span>
-          <span class="stat-delta" id="requestsDelta"></span>
-        </div>
-        <div class="stat-body">
-          <span class="stat-value" id="requestsValue">—</span>
-          <canvas class="stat-spark" id="requestsSpark" width="120" height="36" role="img" aria-label="Requests per second trend"></canvas>
-        </div>
-      </article>
-    </section>
-
-    <section class="chart-card" aria-label="CPU and memory history">
-      <div class="chart-card-head">
-        <h2>CPU &amp; memory history</h2>
-        <ul class="legend" id="chartLegend">
-          <li><span class="legend-line" style="--c: var(--series-cpu)"></span>CPU</li>
-          <li><span class="legend-line" style="--c: var(--series-memory)"></span>Memory</li>
-        </ul>
-        <button class="link-btn" id="toggleTable" type="button" aria-expanded="false" aria-controls="chartTableWrap">
-          View data
-        </button>
+    <section class="hero-card state-aman" id="securityHero" aria-label="Status keamanan sistem">
+      <span class="hero-label">STATUS KEAMANAN SISTEM</span>
+      <div class="hero-main">
+        <span class="hero-dot" id="heroDot" aria-hidden="true"></span>
+        <span class="hero-title" id="heroTitle">SYSTEM SECURED</span>
       </div>
-      <div class="chart-wrap">
-        <canvas id="mainChart" height="220" role="img" aria-label="Line chart of CPU and memory usage over time"></canvas>
-        <div class="tooltip" id="chartTooltip" hidden></div>
-      </div>
-      <div class="chart-table-wrap" id="chartTableWrap" hidden>
-        <table class="chart-table">
-          <caption>CPU and memory usage by time</caption>
-          <thead>
-            <tr><th scope="col">Time</th><th scope="col">CPU %</th><th scope="col">Memory %</th></tr>
-          </thead>
-          <tbody id="chartTableBody"></tbody>
-        </table>
+      <p class="hero-subtitle" id="heroSubtitle">Belum ada pemeriksaan — menjalankan analisis awal…</p>
+      <div class="hero-meta">
+        <span id="heroChecked">—</span>
       </div>
     </section>
 
-    <section class="panels">
-      <article class="panel" aria-label="Service status">
-        <h2>Services</h2>
-        <ul class="service-list" id="serviceList"></ul>
-      </article>
+    <section class="test-card" aria-label="Panggilan 2 AI Synchronous" id="aiSyncCard">
+      <h2>Panggilan 2 AI Synchronous</h2>
+      <p class="hint">Menjalankan 2 model simulasi (Random Forest &amp; SVM) secara bersamaan via <code>asyncio.gather()</code> terhadap <code>/api/proses_ai</code>. Tidak ada model nyata — data simulasi.</p>
 
-      <article class="panel" aria-label="Recent events">
-        <h2>Recent events</h2>
-        <ul class="log-list" id="logList"></ul>
-      </article>
+      <form class="test-form" id="syncForm">
+        <label for="syncInput" class="sr-only">Data untuk dianalisis</label>
+        <input
+          class="text-input"
+          id="syncInput"
+          name="input"
+          type="text"
+          placeholder="Masukkan data / log / sample untuk dianalisis…"
+          autocomplete="off"
+          required
+        />
+        <button class="btn-primary" id="syncSubmitBtn" type="submit">Jalankan analisis</button>
+      </form>
+
+      <div class="result-meta" id="syncResultMeta" hidden>
+        <span class="status-pill" id="syncStatusPill"></span>
+        <span class="result-latency" id="syncLatency"></span>
+      </div>
+
+      <div id="syncResultBody"></div>
+
+      <div class="ai-history" id="aiHistoryWrap" hidden>
+        <h3>Riwayat pemeriksaan</h3>
+        <ul class="history-list" id="aiHistoryList"></ul>
+      </div>
     </section>
   </main>
 
   <footer class="foot">
-    <span>Data is simulated for demo purposes · auto-refreshes every 5s</span>
+    <span>Data is simulated for demo purposes</span>
   </footer>
 
 </div>

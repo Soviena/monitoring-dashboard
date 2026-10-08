@@ -7,12 +7,8 @@
     "SVM": css.getPropertyValue("--series-memory").trim(),
   };
 
-  const DEFAULT_INPUT = "pemeriksaan otomatis saat memuat dashboard";
-  const MAX_HISTORY = 8;
   const history = [];
-  let heroEverSucceeded = false;
-
-  // ---------- clock ----------
+  const MAX_HISTORY = 10;
 
   function tickClock() {
     const el = document.getElementById("clock");
@@ -24,34 +20,6 @@
   function fmtTime(t) {
     return new Date(t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
   }
-
-  // ---------- hero (STATUS KEAMANAN SISTEM) ----------
-
-  function applyHeroState(verdict, timestamp) {
-    const hero = document.getElementById("securityHero");
-    const title = document.getElementById("heroTitle");
-    const subtitle = document.getElementById("heroSubtitle");
-    const checked = document.getElementById("heroChecked");
-    const overallDot = document.getElementById("overallDot");
-    const overallLabel = document.getElementById("overallLabel");
-
-    const isAman = verdict === "AMAN";
-    hero.classList.toggle("state-aman", isAman);
-    hero.classList.toggle("state-bahaya", !isAman);
-
-    title.textContent = isAman ? "SYSTEM SECURED" : "LEVEL ALERT : CRITICAL";
-    subtitle.textContent = isAman
-      ? "Tidak ada ancaman terdeteksi dari pemeriksaan terakhir."
-      : "Ancaman terdeteksi — segera lakukan tindak lanjut.";
-    checked.textContent = `Diperiksa ${fmtTime(timestamp)}`;
-
-    overallDot.className = `status-dot status-${isAman ? "good" : "critical"}`;
-    overallLabel.textContent = isAman ? "Aman" : "Bahaya terdeteksi";
-
-    heroEverSucceeded = true;
-  }
-
-  // ---------- result rendering (shared shape with test-ai.js) ----------
 
   function predBadgeClass(prediction) {
     return prediction === "BAHAYA" ? "bahaya" : "aman";
@@ -94,14 +62,15 @@
     return card;
   }
 
-  function renderSyncResult(data, latencyMs) {
-    const metaWrap = document.getElementById("syncResultMeta");
-    const pill = document.getElementById("syncStatusPill");
-    const latencyEl = document.getElementById("syncLatency");
-    const body = document.getElementById("syncResultBody");
+  function renderResult(data, latencyMs) {
+    const section = document.getElementById("resultSection");
+    const pill = document.getElementById("statusPill");
+    const latencyEl = document.getElementById("resultLatency");
+    const body = document.getElementById("resultBody");
 
-    metaWrap.hidden = false;
+    section.hidden = false;
     latencyEl.textContent = `${latencyMs} ms round-trip`;
+
     pill.replaceChildren();
     body.replaceChildren();
 
@@ -128,23 +97,26 @@
       box.appendChild(msg);
       body.appendChild(box);
     }
+
+    document.getElementById("rawJson").textContent = JSON.stringify(data, null, 2);
   }
 
   function renderHistory() {
-    const wrap = document.getElementById("aiHistoryWrap");
-    const list = document.getElementById("aiHistoryList");
+    const list = document.getElementById("historyList");
+    const empty = document.getElementById("historyEmpty");
+    list.replaceChildren();
+
     if (!history.length) {
-      wrap.hidden = true;
+      empty.hidden = false;
       return;
     }
-    wrap.hidden = false;
-    list.replaceChildren();
+    empty.hidden = true;
 
     history.forEach((entry) => {
       const li = document.createElement("li");
 
       const dot = document.createElement("span");
-      dot.className = `status-dot status-${entry.dotStatus}`;
+      dot.className = `status-dot status-${entry.ok ? "good" : "critical"}`;
 
       const time = document.createElement("span");
       time.className = "history-time";
@@ -152,7 +124,7 @@
 
       const input = document.createElement("span");
       input.className = "history-input";
-      input.textContent = entry.verdictLabel ? `${entry.input} · ${entry.verdictLabel}` : entry.input;
+      input.textContent = entry.input;
 
       const latency = document.createElement("span");
       latency.className = "history-latency";
@@ -163,12 +135,22 @@
     });
   }
 
-  // ---------- run the 2 synchronous AI calls ----------
+  document.getElementById("toggleRaw").addEventListener("click", (evt) => {
+    const wrap = document.getElementById("rawJsonWrap");
+    const show = wrap.hidden;
+    wrap.hidden = !show;
+    evt.currentTarget.setAttribute("aria-expanded", String(show));
+    evt.currentTarget.textContent = show ? "Hide raw response" : "View raw response";
+  });
 
-  async function runSync(input, { isAuto = false, allowRetry = true } = {}) {
-    const btn = document.getElementById("syncSubmitBtn");
+  document.getElementById("testForm").addEventListener("submit", async (evt) => {
+    evt.preventDefault();
+    const input = document.getElementById("inputText").value.trim();
+    if (!input) return;
+
+    const btn = document.getElementById("submitBtn");
     btn.disabled = true;
-    btn.textContent = "Memproses…";
+    btn.textContent = "Running…";
 
     const start = performance.now();
     try {
@@ -176,42 +158,22 @@
       const data = await res.json();
       const latencyMs = Math.round(performance.now() - start);
 
-      renderSyncResult(data, latencyMs);
+      renderResult(data, latencyMs);
 
-      if (data.status === "success") {
-        const verdict = data.result.some((r) => r.prediction === "BAHAYA") ? "BAHAYA" : "AMAN";
-        applyHeroState(verdict, Date.now());
-        history.unshift({ t: Date.now(), input, dotStatus: verdict === "AMAN" ? "good" : "critical", verdictLabel: verdict, latencyMs });
-      } else if (isAuto && !heroEverSucceeded && allowRetry) {
-        // initial load hit the simulated failure path — retry once silently
-        btn.disabled = false;
-        btn.textContent = "Jalankan analisis";
-        return runSync(input, { isAuto: true, allowRetry: false });
-      } else {
-        history.unshift({ t: Date.now(), input, dotStatus: "warning", verdictLabel: "ERROR", latencyMs });
-      }
-
+      history.unshift({ t: Date.now(), input, ok: data.status === "success", latencyMs });
       if (history.length > MAX_HISTORY) history.length = MAX_HISTORY;
       renderHistory();
     } catch (err) {
       const latencyMs = Math.round(performance.now() - start);
-      renderSyncResult({ status: "error", message: `Request failed: ${err.message}`, result: [] }, latencyMs);
-      history.unshift({ t: Date.now(), input, dotStatus: "warning", verdictLabel: "ERROR", latencyMs });
+      renderResult({ status: "error", message: `Request failed: ${err.message}`, result: [] }, latencyMs);
+      history.unshift({ t: Date.now(), input, ok: false, latencyMs });
       if (history.length > MAX_HISTORY) history.length = MAX_HISTORY;
       renderHistory();
     } finally {
       btn.disabled = false;
-      btn.textContent = "Jalankan analisis";
+      btn.textContent = "Run test";
     }
-  }
-
-  document.getElementById("syncForm").addEventListener("submit", (evt) => {
-    evt.preventDefault();
-    const input = document.getElementById("syncInput").value.trim();
-    if (!input) return;
-    runSync(input);
   });
 
-  // initial automatic check so the dashboard isn't empty on load
-  runSync(DEFAULT_INPUT, { isAuto: true });
+  renderHistory();
 })();
