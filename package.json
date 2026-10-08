@@ -1,0 +1,9 @@
+{
+  "name": "monitoring-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Dark-theme data monitoring dashboard with a static UI and serverless API, deployed on Vercel.",
+  "engines": {
+    "node": "20.x"
+  }
+}

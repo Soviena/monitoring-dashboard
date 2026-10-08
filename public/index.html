@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Monitor — Data Dashboard</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="app">
+
+  <header class="topbar">
+    <div class="topbar-left">
+      <span class="logo-dot" aria-hidden="true"></span>
+      <h1>Monitor</h1>
+    </div>
+    <div class="topbar-right">
+      <div class="overall-status" id="overallStatus">
+        <span class="status-dot status-good" id="overallDot"></span>
+        <span id="overallLabel">All systems operational</span>
+      </div>
+      <time class="clock" id="clock" aria-live="off"></time>
+    </div>
+  </header>
+
+  <main>
+    <section class="stats-grid" aria-label="Key metrics">
+      <article class="stat-tile" data-metric="cpu">
+        <div class="stat-head">
+          <span class="stat-label">CPU usage</span>
+          <span class="stat-delta" id="cpuDelta"></span>
+        </div>
+        <div class="stat-body">
+          <span class="stat-value" id="cpuValue">—</span>
+          <canvas class="stat-spark" id="cpuSpark" width="120" height="36" role="img" aria-label="CPU usage trend"></canvas>
+        </div>
+      </article>
+
+      <article class="stat-tile" data-metric="memory">
+        <div class="stat-head">
+          <span class="stat-label">Memory usage</span>
+          <span class="stat-delta" id="memoryDelta"></span>
+        </div>
+        <div class="stat-body">
+          <span class="stat-value" id="memoryValue">—</span>
+          <canvas class="stat-spark" id="memorySpark" width="120" height="36" role="img" aria-label="Memory usage trend"></canvas>
+        </div>
+      </article>
+
+      <article class="stat-tile" data-metric="network">
+        <div class="stat-head">
+          <span class="stat-label">Network</span>
+          <span class="stat-delta" id="networkDelta"></span>
+        </div>
+        <div class="stat-body">
+          <span class="stat-value" id="networkValue">—</span>
+          <canvas class="stat-spark" id="networkSpark" width="120" height="36" role="img" aria-label="Network throughput trend"></canvas>
+        </div>
+      </article>
+
+      <article class="stat-tile" data-metric="requests">
+        <div class="stat-head">
+          <span class="stat-label">Requests / s</span>
+          <span class="stat-delta" id="requestsDelta"></span>
+        </div>
+        <div class="stat-body">
+          <span class="stat-value" id="requestsValue">—</span>
+          <canvas class="stat-spark" id="requestsSpark" width="120" height="36" role="img" aria-label="Requests per second trend"></canvas>
+        </div>
+      </article>
+    </section>
+
+    <section class="chart-card" aria-label="CPU and memory history">
+      <div class="chart-card-head">
+        <h2>CPU &amp; memory history</h2>
+        <ul class="legend" id="chartLegend">
+          <li><span class="legend-line" style="--c: var(--series-cpu)"></span>CPU</li>
+          <li><span class="legend-line" style="--c: var(--series-memory)"></span>Memory</li>
+        </ul>
+        <button class="link-btn" id="toggleTable" type="button" aria-expanded="false" aria-controls="chartTableWrap">
+          View data
+        </button>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="mainChart" height="220" role="img" aria-label="Line chart of CPU and memory usage over time"></canvas>
+        <div class="tooltip" id="chartTooltip" hidden></div>
+      </div>
+      <div class="chart-table-wrap" id="chartTableWrap" hidden>
+        <table class="chart-table">
+          <caption>CPU and memory usage by time</caption>
+          <thead>
+            <tr><th scope="col">Time</th><th scope="col">CPU %</th><th scope="col">Memory %</th></tr>
+          </thead>
+          <tbody id="chartTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panels">
+      <article class="panel" aria-label="Service status">
+        <h2>Services</h2>
+        <ul class="service-list" id="serviceList"></ul>
+      </article>
+
+      <article class="panel" aria-label="Recent events">
+        <h2>Recent events</h2>
+        <ul class="log-list" id="logList"></ul>
+      </article>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <span>Data is simulated for demo purposes · auto-refreshes every 5s</span>
+  </footer>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>
