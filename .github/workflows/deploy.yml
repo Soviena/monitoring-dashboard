@@ -13,6 +13,7 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: Vercel
     steps:
       - name: Checkout
         uses: actions/checkout@v4
